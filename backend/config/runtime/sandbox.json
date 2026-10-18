@@ -1,0 +1,7 @@
+{
+  "sandbox_enabled": true,
+  "nsjail_root": null,
+  "nsjail_binary": "nsjail",
+  "sandbox_seconds": 10,
+  "sandbox_concurrency": 2
+}

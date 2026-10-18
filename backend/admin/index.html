@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synaxis 管理</title><link rel="stylesheet" href="/admin/assets/admin.css"><script defer src="/admin/assets/admin.js"></script></head>
+<body><main><header><h1>Synaxis <span>管理后台</span></h1><button id="logout" hidden>退出</button></header>
+<p id="status" role="status" aria-live="polite">正在检查登录状态…</p>
+<section id="login"><h2>管理员登录</h2><p>使用独立管理员密码；学生账号不能登录此面板。</p><form id="login-form"><label>密码<input id="admin-password" type="password" required autocomplete="current-password" maxlength="1024"></label><button>登录</button></form><small>首次使用：在服务器终端运行 main.py --set-admin-password。</small></section>
+<div id="panel" hidden><section><h2>用户</h2><form id="search-form" class="row"><input id="search" placeholder="搜索用户名" aria-label="搜索用户名"><button>查询</button></form><div class="table"><table><thead><tr><th>ID</th><th>用户名</th><th>状态</th><th>操作</th></tr></thead><tbody id="users"></tbody></table></div><button id="more" hidden>下一页</button>
+<details><summary>新增用户</summary><form id="create-form"><label>用户名<input id="new-name" required maxlength="64" autocomplete="off"></label><label>初始密码<input id="new-password" type="password" minlength="12" maxlength="1024" required autocomplete="new-password"></label><button>创建用户</button></form></details>
+<dialog id="edit-dialog"><form id="edit-form"><h2>编辑用户</h2><label>用户名<input id="edit-name" required maxlength="64"></label><label>重设密码（留空表示保留）<input id="edit-password" type="password" minlength="12" maxlength="1024" autocomplete="new-password"></label><label class="check"><input id="edit-active" type="checkbox">允许登录</label><div class="row"><button>保存</button><button id="close-edit" type="button">取消</button></div></form></dialog></section>
+<section><h2>网络配置</h2><p>保存后重启生效。环境变量有更高优先级；修改地址或端口后请用新地址访问。局域网管理需要 HTTPS。</p><label>配置 JSON<textarea id="network" rows="16" spellcheck="false"></textarea></label><button id="save-network">保存配置</button><details><summary>当前实际配置</summary><pre id="effective"></pre></details></section>
+<section><h2>服务</h2><p>有教学请求运行时会拒绝重启。重启后需重新登录。</p><button id="restart" class="danger">重启服务</button></section></div>
+</main></body></html>

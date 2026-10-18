@@ -1,0 +1,74 @@
+name: Backend checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend / ${{ matrix.os }} / Python 3.12
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.13.0'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Create isolated environment
+        run: uv venv .venv --python 3.12
+      - name: Install locked dependencies
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run --frozen ruff check api auth core domain llm runtime storage tools tests ../main.py
+      - name: Unit regressions without runtime assets or credentials
+        run: |
+          python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
+          uv run --frozen pytest -q -W error::RuntimeWarning --basetemp=test-results/ci-unit
+      - name: Check generated API contract
+        run: uv run --frozen python -m runtime.openapi_contract --check
+      - name: Scan publication candidates
+        run: uv run --frozen python -m runtime.publication --check
+      - name: Export backend source
+        if: runner.os == 'Linux'
+        run: uv run --frozen python -m runtime.publication --output dist/synaxis-backend.zip
+      - name: Check the exported source independently
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python -m zipfile -e dist/synaxis-backend.zip "$RUNNER_TEMP/synaxis-source"
+          cd "$RUNNER_TEMP/synaxis-source/backend"
+          uv venv .venv --python 3.12
+          uv sync --frozen
+          python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
+          uv run --frozen pytest -q -W error::RuntimeWarning --basetemp=test-results/ci-unit
+          uv run --frozen python -m runtime.openapi_contract --check
+          uv run --frozen python -m runtime.publication --check
+          uv run --frozen python ../main.py --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: success() && runner.os == 'Linux'
+        with:
+          name: synaxis-backend-source
+          path: backend/dist/synaxis-backend.zip
+          if-no-files-found: error

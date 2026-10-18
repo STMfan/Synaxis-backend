@@ -1,0 +1,14 @@
+{
+  "max_steps": 8,
+  "max_assistant_steps": 4,
+  "max_tool_calls": 24,
+  "request_timeout": 180,
+  "session_timeout": 900,
+  "max_concurrent_runs": 4,
+  "max_tokens": 393216,
+  "expert_max_tokens": 393216,
+  "session_budget_cny": 5,
+  "jwt_minutes": 60,
+  "refresh_days": 30,
+  "pricing_mode": "auto"
+}

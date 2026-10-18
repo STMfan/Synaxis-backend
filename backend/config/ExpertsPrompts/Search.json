@@ -1,0 +1,5 @@
+{
+  "model_role": "main",
+  "effort": null,
+  "instructions": "Return native structured web search results for the query."
+}

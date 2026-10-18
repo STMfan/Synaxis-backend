@@ -1,0 +1,17 @@
+{
+  "help": {
+    "GPTImage": "GPTImage(prompt)：生成教学图像。服务按请求中真实授权控制费用；文学插图与科学精确图形须区分。 返回artifact_id后，用localfile放在对应说明段落之后；不能将科学精确图交由自由绘画。",
+    "PythonBox": "PythonBox(code,input_artifact_ids)：AST 白名单+本机 nsjail，允许 numpy/PIL/svglib/svg3d。输入只允许本会话 Render PNG。函数以模块属性调用。Image.save('/work/output/output.png')；svg3d.Engine/View/Mesh/get_lookat_matrix/get_projection_matrix 可用，Engine.render('/work/output/output.svg',size=(1024,1024)) 生成 SVG。svglib.svglib.svg2rlg 可读取该输出 SVG。stdout 自动记为日志。无网络，无系统操作。 精确计算须说明假设；PNG/SVG产物按真实ID与文字交错排放，stdout日志是附件。",
+    "Render": "Render(source,kind,width,height)：HTML/SVG/CSS3D 由 Playwright 渲染 PNG。禁 JS、网络、外部文件，用 CSS/details/滚动做简单交互。 方图至少width=height=1024，SVG用匹配viewBox；函数图用光滑C/Q/A路径或亚像素误差的自适应采样，间断处分段。返回真实artifact_id，将localfile放在对应说明之间。"
+  },
+  "descriptions": {
+    "Search": "Search web for structured sources / 搜索结构化来源",
+    "AssistantOnWeb": "Delegate detail research in isolated context / 委托联网助理调查细节",
+    "Syllabus": "Offline retrieval of designated 2017 curriculum standards; preserve PDF pages, source hashes, shared scope and quality warnings / 离线课标检索，附原文与来源",
+    "GPTImage": "Generate teaching illustration; explicit paid authorization required / 教学绘图",
+    "PythonBox": "Run allowlisted Python in local Linux nsjail / 本机隔离计算",
+    "Render": "Render static HTML, SVG or CSS3D to PNG / 静态图形渲染",
+    "AskStudent": "Ask one question and pause for student answer / 追问并等待答复",
+    "RequestMaxThinking": "Request Max for a difficult multi-step task, once per student turn / 为复杂多步推理申请 Max，每回合一次"
+  }
+}

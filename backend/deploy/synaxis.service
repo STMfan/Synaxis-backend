@@ -1,0 +1,24 @@
+[Unit]
+Description=Synaxis Teaching Backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=synaxis
+Group=synaxis
+WorkingDirectory=/srv/synaxis
+Environment=SYNAXIS_CONFIG_DIR=/srv/synaxis-data/config
+Environment=SYNAXIS_ENV_FILE=/srv/synaxis-data/service.env
+Environment=DATA_DIR=/srv/synaxis-data
+ExecStart=/srv/synaxis/backend/.venv/bin/python /srv/synaxis/main.py
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=40
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

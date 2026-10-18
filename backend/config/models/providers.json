@@ -1,0 +1,59 @@
+{
+  "roles": {
+    "main": "deepseek",
+    "literature": "deepseek",
+    "process": "siliconflow"
+  },
+  "providers": {
+    "deepseek": {
+      "protocol": "deepseek_anthropic",
+      "base_url": "https://api.deepseek.com/anthropic/v1",
+      "reasoning_parameter": "reasoning_effort",
+      "reasoning_values": {
+        "off": "none",
+        "low": "low",
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "siliconflow": {
+      "protocol": "openai_chat",
+      "base_url": "https://api.siliconflow.cn/v1",
+      "excluded_from_budget": true,
+      "supports_images": false,
+      "supports_json_mode": true,
+      "reasoning_parameter": "enable_thinking",
+      "reasoning_values": {
+        "off": false,
+        "low": true,
+        "high": true
+      },
+      "output_limits": {
+        "deepseek-ai/DeepSeek-V3.2": 65536,
+        "Qwen/Qwen3.5-9B": 393216,
+        "Qwen/Qwen3.5-35B-A3B": 393216
+      },
+      "context_limits": {
+        "deepseek-ai/DeepSeek-V3.2": 163840,
+        "Qwen/Qwen3.5-9B": 262144,
+        "Qwen/Qwen3.5-35B-A3B": 262144
+      }
+    },
+    "openai-compatible": {
+      "protocol": "openai_chat",
+      "base_url": "https://api.openai.com/v1",
+      "supports_json_mode": true,
+      "max_tokens_field": "max_completion_tokens",
+      "reasoning_parameter": "reasoning_effort",
+      "reasoning_values": {
+        "off": "none",
+        "low": "low",
+        "high": "high",
+        "max": "max"
+      },
+      "output_limits": {},
+      "context_limits": {},
+      "price_rates_cny": {}
+    }
+  }
+}

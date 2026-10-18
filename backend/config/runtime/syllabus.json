@@ -1,0 +1,8 @@
+{
+  "syllabus_enabled": true,
+  "syllabus_data_dir": null,
+  "syllabus_model_cache": null,
+  "syllabus_mode": "hybrid",
+  "syllabus_top_k": 5,
+  "syllabus_threads": 2
+}

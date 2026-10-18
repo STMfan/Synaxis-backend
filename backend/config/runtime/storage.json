@@ -1,0 +1,9 @@
+{
+  "data_dir": null,
+  "retention_days": 365,
+  "retention_bytes": 2147483648,
+  "artifact_retention_days": 365,
+  "log_retention_days": 365,
+  "artifact_bytes": 8388608,
+  "maintenance_seconds": 3600
+}

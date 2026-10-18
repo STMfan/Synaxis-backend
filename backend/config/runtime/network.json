@@ -1,0 +1,10 @@
+{
+  "host": "127.0.0.1",
+  "port": 5667,
+  "cors_origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+  "tls_certfile": null,
+  "tls_keyfile": null,
+  "admin_enabled": true,
+  "admin_allow_lan": true,
+  "admin_session_minutes": 30
+}
