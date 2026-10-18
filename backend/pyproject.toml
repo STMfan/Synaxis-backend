@@ -18,6 +18,7 @@ sandbox = ["numpy>=2,<3", "pillow>=11,<13", "svglib>=2,<3", "svg3d"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 addopts = "-m 'not integration and not syllabus_integration'"
 markers = [
