@@ -1,6 +1,6 @@
 # Frontend contract / 前端契约：API 1.0.0，展示格式 1.0
 
-当前机器可读契约为 backend/contracts/openapi.json，由后端生成并由 CI 核对；可用于客户端生成类型。字段、事件和状态语义需一并检查，不能仅用路径数量判断兼容。本文描述后端接口，不代表某个前端构建或设备已完成验收。
+当前机器可读契约为 contracts/openapi.json，由后端生成并由 CI 核对；可用于客户端生成类型。字段、事件和状态语义需一并检查，不能仅用路径数量判断兼容。本文描述后端接口，不代表某个前端构建或设备已完成验收。
 
 Bearer JWT 放在 `Authorization` 请求头。禁止把 token 放 URL；浏览器 SSE 用 `fetch` 的 ReadableStream，原生 EventSource 不能设置该请求头。每条 SSE 的 `id` 是持久化事件 ID；重连传 `after` 或 `Last-Event-ID`，按 ID 去重。`waiting/completed/failed/cancelled` 后流关闭，回答追问后重新订阅。断开流不会取消教学调用，取消需使用 API。
 

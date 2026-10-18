@@ -23,7 +23,7 @@ jobs:
         os: [ubuntu-24.04, windows-latest]
     defaults:
       run:
-        working-directory: backend
+        working-directory: .
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -35,13 +35,13 @@ jobs:
         with:
           version: '0.13.0'
           enable-cache: true
-          cache-dependency-glob: backend/uv.lock
+          cache-dependency-glob: uv.lock
       - name: Create isolated environment
         run: uv venv .venv --python 3.12
       - name: Install locked dependencies
         run: uv sync --frozen
       - name: Lint
-        run: uv run --frozen ruff check api auth core domain llm runtime storage tools tests ../main.py
+        run: uv run --frozen ruff check api auth core domain llm runtime storage tools tests main.py
       - name: Unit regressions without runtime assets or credentials
         run: |
           python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
@@ -58,17 +58,17 @@ jobs:
         shell: bash
         run: |
           python -m zipfile -e dist/synaxis-backend.zip "$RUNNER_TEMP/synaxis-source"
-          cd "$RUNNER_TEMP/synaxis-source/backend"
+          cd "$RUNNER_TEMP/synaxis-source"
           uv venv .venv --python 3.12
           uv sync --frozen
           python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
           uv run --frozen pytest -q -W error::RuntimeWarning --basetemp=test-results/ci-unit
           uv run --frozen python -m runtime.openapi_contract --check
           uv run --frozen python -m runtime.publication --check
-          uv run --frozen python ../main.py --check
+          uv run --frozen python main.py --check
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: success() && runner.os == 'Linux'
         with:
           name: synaxis-backend-source
-          path: backend/dist/synaxis-backend.zip
+          path: dist/synaxis-backend.zip
           if-no-files-found: error

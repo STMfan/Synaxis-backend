@@ -7,11 +7,10 @@
 在只有公开源码的目录中执行以下命令。系统需要 Python 3.12、uv 和 Git；首次 uv sync 会下载锁文件中的依赖，测试本身不需要外部服务。
 
 ```bash
-uv venv backend/.venv --python 3.12
-uv sync --project backend --frozen
-cd backend
+uv venv .venv --python 3.12
+uv sync --frozen
 python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
-uv run --frozen ruff check api auth core domain llm runtime storage tools tests ../main.py
+uv run --frozen ruff check api auth core domain llm runtime storage tools tests main.py
 uv run --frozen pytest -q --basetemp=test-results/unit-temp -W error::RuntimeWarning
 uv run --frozen python -m runtime.openapi_contract --check
 ```
@@ -46,7 +45,7 @@ pytest --basetemp 会重建指定目录，不能指向业务数据、备份或�
 
 ## API 契约与源码导出
 
-backend/contracts/openapi.json 是从当前后端生成的公开基线，供客户端生成类型和核对契约。修改 API 后，先检查保留操作、请求/响应及 SSE 字段的兼容性，再有意更新基线；不能仅靠路径数量一致判断兼容。
+contracts/openapi.json 是从当前后端生成的公开基线，供客户端生成类型和核对契约。修改 API 后，先检查保留操作、请求/响应及 SSE 字段的兼容性，再有意更新基线；不能仅靠路径数量一致判断兼容。
 
 ```bash
 uv run --frozen python -m runtime.openapi_contract --check
@@ -89,7 +88,7 @@ SYNAXIS_TEST_SYLLABUS=/absolute/path/to/imported-syllabus \
 uv run --frozen pytest tests/integration/test_syllabus.py -m syllabus_integration -q --basetemp=test-results/syllabus-integration
 ```
 
-未设置 SYNAXIS_TEST_SYLLABUS 时读取 backend/data/syllabus；公开源码中没有这些资源。测试阻断 Python TCP 外连，检查真实 9 科、567 个片段、261 个章节的 lexical/semantic/hybrid、过滤、父章节/页码/哈希、查询窗口及 Expert 工具续轮。文本模型仍为合成响应，不发送学生数据或产生云端模型费用。Linux 同时运行两类集成时使用 -m 'integration or syllabus_integration'，并保留两类资源路径。
+未设置 SYNAXIS_TEST_SYLLABUS 时读取 data/syllabus；公开源码中没有这些资源。测试阻断 Python TCP 外连，检查真实 9 科、567 个片段、261 个章节的 lexical/semantic/hybrid、过滤、父章节/页码/哈希、查询窗口及 Expert 工具续轮。文本模型仍为合成响应，不发送学生数据或产生云端模型费用。Linux 同时运行两类集成时使用 -m 'integration or syllabus_integration'，并保留两类资源路径。
 
 普通单元使用合成小型 SQLite 与 512 维向量，覆盖导入不覆盖、失败原子性、文件完整性、共享课程范围、离线加载和取消门锁；它们不依赖私人验收报告。真实 PDF 的哈希可在导入时校验，检索测试不代替逐字人工校对或资源授权核查。
 

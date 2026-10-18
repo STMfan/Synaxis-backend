@@ -140,7 +140,7 @@ def main(argv=None):
         if args.write:
             CONTRACT.parent.mkdir(parents=True, exist_ok=True)
             CONTRACT.write_text(encoded(schema), encoding="utf-8")
-            print("Updated backend/contracts/openapi.json")
+            print("Updated contracts/openapi.json")
         elif not CONTRACT.is_file() or CONTRACT.read_text(encoding="utf-8") != encoded(schema):
             print("Contract differs from source; regenerate with --write and review the diff")
             return 1

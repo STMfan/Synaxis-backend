@@ -1,19 +1,18 @@
-"""Start Synaxis from the project root; all implementation stays in backend."""
+"""Start Synaxis from the backend repository root."""
 
 import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-BACKEND = ROOT / "backend"
 
 
 def main():
-    executable = BACKEND / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    if executable.is_file() and Path(sys.prefix).resolve() != (BACKEND / ".venv").resolve():
+    executable = ROOT / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if executable.is_file() and Path(sys.prefix).resolve() != (ROOT / ".venv").resolve():
         os.execv(str(executable), [str(executable), str(ROOT / "main.py"), *sys.argv[1:]])
-    sys.path.insert(0, str(BACKEND))
     from runtime.launcher import main as launch
+
     return launch()
 
 

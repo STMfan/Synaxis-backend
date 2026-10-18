@@ -45,7 +45,7 @@ BACKEND_FILES = (
     "NOTICE",
     "NOTICE.md",
 )
-ROOT_FILES = ("main.py", "README.md", ".gitignore", ".gitattributes", "LICENSE", "LICENSE.md", "NOTICE", "NOTICE.md")
+ROOT_FILES = ("main.py", *BACKEND_FILES)
 TEXT_SUFFIXES = frozenset(
     {
         ".py",
@@ -230,22 +230,17 @@ def _walk(directory: Path, root: Path):
 
 def collect_sources(root: Path | None = None) -> tuple[SourceFile, ...]:
     """Read only the explicit backend source allowlist, including root CI/licenses."""
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[1]
     if _is_link(root) or not root.is_dir():
         raise PublicationError("Source root must be a real directory")
     root = root.resolve()
-    backend = root / "backend"
-    if not backend.is_dir() or _is_link(backend):
-        raise PublicationError("Source root must contain a real backend directory")
     collected: list[SourceFile] = []
-    for path in (*(root / name for name in ROOT_FILES), *(backend / name for name in BACKEND_FILES)):
+    for path in (root / name for name in ROOT_FILES):
         if path.exists() or path.is_symlink():
             source = _read_source(path, root)
-            if path == root / "README.md":
-                source = SourceFile("README.md", _backend_entry_readme())
             collected.append(source)
     for name in BACKEND_DIRECTORIES:
-        path = backend / name
+        path = root / name
         if path.exists() or path.is_symlink():
             collected.extend(_walk(path, root))
     github = root / ".github"
@@ -265,30 +260,6 @@ def collect_sources(root: Path | None = None) -> tuple[SourceFile, ...]:
     if not collected or sum(len(item.content) for item in collected) > MAX_TOTAL_BYTES:
         raise PublicationError("Empty or oversized public source set")
     return tuple(collected)
-
-
-def _backend_entry_readme() -> bytes:
-    """Generate the module entry without altering the monorepo documentation."""
-    from core.version import VERSION
-
-    return (
-        f"# Synaxis backend {VERSION}\n\n"
-        "This standalone source package contains backend/, main.py and the backend CI workflow. "
-        "The student client is distributed separately.\n\n"
-        "Start with [backend/README.md](backend/README.md). "
-        "Setup is documented in [deployment](backend/docs/deployment.md). "
-        "Project code uses [MIT](LICENSE); third-party resources keep their own terms "
-        "as described in [backend/NOTICE](backend/NOTICE).\n\n"
-        "## Core checks\n\n"
-        "```sh\ncd backend\nuv venv .venv --python 3.12\nuv sync --frozen\n"
-        "uv run --frozen ruff check api auth core domain llm runtime storage tools tests ../main.py\n"
-        "uv run --frozen pytest -q\n"
-        "uv run --frozen python -m runtime.openapi_contract --check\n"
-        "uv run --frozen python -m runtime.publication --check\n"
-        "uv run --frozen python ../main.py --check\n```\n\n"
-        "Unit checks do not require production credentials, runtime data, curriculum assets or models. "
-        "Runtime dependencies and optional integrations are installed separately.\n"
-    ).encode()
 
 
 def _private_text(path: Path, limit: int) -> str | None:
@@ -317,7 +288,7 @@ def known_secrets(root: Path) -> tuple[str, ...]:
     and this default-store check cannot establish that unknown or historical
     secrets are absent.
     """
-    dotenv = _private_text(root / "backend" / ".env", 1024 * 1024)
+    dotenv = _private_text(root / ".env", 1024 * 1024)
     values: set[str] = set()
     for line in (dotenv or "").splitlines():
         key, separator, value = line.strip().removeprefix("export ").partition("=")
@@ -330,7 +301,7 @@ def known_secrets(root: Path) -> tuple[str, ...]:
             value = value.split(" #", 1)[0].rstrip()
         if len(value) >= 12 and not value.startswith("${"):
             values.add(value)
-    storage = root / "backend" / "data"
+    storage = root / "data"
     if storage.exists() or storage.is_symlink():
         if _is_link(storage) or not storage.is_dir():
             raise PublicationError("Local secret storage cannot be safely checked")
@@ -371,19 +342,14 @@ def _validate_output(output: Path, root: Path) -> Path:
     if destination.exists():
         raise PublicationError("Output already exists; choose a new archive path")
     relative = destination.relative_to(root) if destination.is_relative_to(root) else None
-    if relative is not None and not (
-        len(relative.parts) >= 2
-        and relative.parts[0] == "dist"
-        or len(relative.parts) >= 3
-        and relative.parts[:2] == ("backend", "dist")
-    ):
-        raise PublicationError("Output inside source must be in root dist/ or backend/dist/")
+    if relative is not None and not (len(relative.parts) >= 2 and relative.parts[0] == "dist"):
+        raise PublicationError("Output inside source must be in dist/")
     return destination
 
 
 def publish(output: Path | None = None, *, root: Path | None = None) -> tuple[SourceFile, ...]:
     """Scan the complete source snapshot, then atomically create a new ZIP if requested."""
-    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[1]
     sources = collect_sources(root)
     root = root.resolve()
     findings = scan_sources(sources, known_secrets(root))

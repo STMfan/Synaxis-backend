@@ -1,9 +1,37 @@
-# Secrets: never publish real environments, credentials, certificates or runtime data.
 .env
 .env.*
 *.env
 *.env.*
 !.env.example
+.venv/
+.uv-cache/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+data/
+test-results/
+dist/
+archive/
+deploy-backups/
+vendor/
+rootfs/
+.tools/
+.python/
+.sandbox.env
+*.sqlite3
+*.sqlite3-*
+*.key
+*.pem
+
+# Private configuration and credentials at any repository depth
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+.secrets/
 *.key
 *.pem
 *.p12
@@ -11,44 +39,8 @@
 *.jks
 *.keystore
 *.sqlite
+*.sqlite-*
 *.sqlite3
 *.sqlite3-*
 *.db
 *.db-*
-.secrets/
-# Python and build caches
-.venv/
-.venv-*/
-.uv-cache/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.ruff_cache/
-.coverage*
-htmlcov/
-# Backend private evidence, backups and installed runtimes
-backend/data/
-backend/test-results/
-backend/dist/
-backend/archive/
-backend/deploy-backups/
-backend/vendor/
-backend/rootfs/
-backend/.tools/
-backend/.python/
-backend/.sandbox.env
-*.log
-# Frontend generated files (its local ignore rules remain in effect)
-frontend/node_modules/
-frontend/dist/
-frontend/releases/
-frontend/archive/
-frontend/assets/private-fonts/
-frontend/public/fonts/local/
-frontend/public/fonts/local.css
-frontend/src-tauri/target/
-# Local editors / OS
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db

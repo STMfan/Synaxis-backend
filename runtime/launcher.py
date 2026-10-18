@@ -10,7 +10,7 @@ from pathlib import Path
 
 from runtime.maintenance import InstanceLock, reset_databases
 
-PROJECT = Path(__file__).resolve().parents[2]
+PROJECT = Path(__file__).resolve().parents[1]
 RESTART = 75
 
 

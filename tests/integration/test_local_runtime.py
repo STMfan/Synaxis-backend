@@ -229,7 +229,7 @@ async def test_local_https_admin_teaching_sandbox_and_restart(tmp_path):
                 f"TEXT_{role}_API_KEY": "synthetic-key",
             }
         )
-    project = Path(__file__).resolve().parents[3]
+    project = Path(__file__).resolve().parents[2]
     log_path = tmp_path / "service.log"
     base = f"https://127.0.0.1:{port}"
     with log_path.open("w") as logs:

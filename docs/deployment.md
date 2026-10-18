@@ -2,7 +2,7 @@
 
 适用 API 版本 1.0.0；所有后端部署步骤集中在本文。学生 API 和展示规则另见 [frontend-contract.md](frontend-contract.md)。需要 Python 3.12 与 uv；生产运行 Linux、一个应用 worker，nsjail 与 API 在同一台机器。主入口是项目根 main.py，沙盒不需要独立监听端口。
 
-独立后端源码包只保留根 `.github/workflows/backend.yml`，并生成后端专属根 README；无需额外获取其他模块目录即可运行包内检查。
+本仓库可直接克隆部署；启动入口、依赖和 CI 均位于仓库根目录。
 
 ## 1. 环境与依赖
 
@@ -10,17 +10,17 @@
 
 ```bash
 cd /srv/synaxis
-uv venv backend/.venv --python 3.12
-uv sync --project backend --frozen
+uv venv .venv --python 3.12
+uv sync --frozen
 ```
 
-Windows 开发使用同样的 uv 命令，随后 python main.py 会自动使用 backend/.venv。Linux 使用 backend/.venv/bin/python main.py。Windows 与 WSL 不共享虚拟环境；WSL 的环境、沙盒根目录、数据和测试临时目录应放在 Linux 原生文件系统。建议将源码也复制到发行版文件系统，使用上述相同命令；源码必须位于挂载盘时，可显式选择独立环境：
+Windows 开发使用同样的 uv 命令，随后 python main.py 会自动使用 .venv。Linux 使用 .venv/bin/python main.py。Windows 与 WSL 不共享虚拟环境；WSL 的环境、沙盒根目录、数据和测试临时目录应放在 Linux 原生文件系统。建议将源码也复制到发行版文件系统，使用上述相同命令；源码必须位于挂载盘时，可显式选择独立环境：
 
 ```bash
 SOURCE_DIR=/absolute/path/to/synaxis
 RUNTIME_DIR=$HOME/synaxis-runtime
 uv venv "$RUNTIME_DIR/venv" --python 3.12
-UV_PROJECT_ENVIRONMENT="$RUNTIME_DIR/venv" uv sync --project "$SOURCE_DIR/backend" --frozen --group sandbox
+UV_PROJECT_ENVIRONMENT="$RUNTIME_DIR/venv" uv sync --project "$SOURCE_DIR" --frozen --group sandbox
 "$RUNTIME_DIR/venv/bin/python" "$SOURCE_DIR/main.py" --check
 ```
 
@@ -28,12 +28,12 @@ UV_PROJECT_ENVIRONMENT="$RUNTIME_DIR/venv" uv sync --project "$SOURCE_DIR/backen
 
 ## 2. 私有配置和模型
 
-开发默认读取 backend/.env 与 backend/config。生产建议复制完整 config 到私有数据目录，将敏感环境文件独立保存：
+开发默认读取 .env 与 config。生产建议复制完整 config 到私有数据目录，将敏感环境文件独立保存：
 
 ```bash
 mkdir -p /srv/synaxis-data
-cp -r backend/config /srv/synaxis-data/config
-cp backend/.env.example /srv/synaxis-data/service.env
+cp -r config /srv/synaxis-data/config
+cp .env.example /srv/synaxis-data/service.env
 chmod 600 /srv/synaxis-data/service.env
 ```
 
@@ -46,7 +46,7 @@ chmod 600 /srv/synaxis-data/service.env
 | 配置文件 | 内容 |
 |---|---|
 | config/runtime/network.json | 监听 IP、端口、精确 CORS Origin、TLS 文件、管理员访问/会话时间 |
-| config/runtime/storage.json | data_dir（null 使用 backend/data）、账本 365 天/2GB、产物/日志保留天数、单文件上限、维护间隔 |
+| config/runtime/storage.json | data_dir（null 使用 data）、账本 365 天/2GB、产物/日志保留天数、单文件上限、维护间隔 |
 | config/runtime/execution.json | 工具/轮次/并发、请求/会话超时、输出上限、5 元预算、学生 Token 时间、峰谷模式 |
 | config/runtime/sandbox.json | 启用标志、同机 nsjail 二进制/rootfs、超时及并发 |
 | config/runtime/render.json | Render 启用状态、可选 Chromium 路径 |
@@ -119,12 +119,12 @@ ln -s /opt/python/bin/python3.12 /srv/synaxis-runtime/rootfs/usr/bin/python3
 cd /srv/synaxis
 uv export --project backend --frozen --only-group sandbox --no-hashes --no-emit-project > /srv/synaxis-runtime/sandbox-requirements.txt
 uv pip install --python /srv/synaxis-runtime/rootfs/opt/python/bin/python3.12 --break-system-packages -r /srv/synaxis-runtime/sandbox-requirements.txt
-backend/.venv/bin/python backend/deploy/copy_runtime.py /srv/synaxis-runtime/rootfs
+.venv/bin/python deploy/copy_runtime.py /srv/synaxis-runtime/rootfs
 ```
 
 sandbox.json 填 nsjail_binary=/srv/synaxis-runtime/nsjail/nsjail、nsjail_root=/srv/synaxis-runtime/rootfs。普通服务账号需有 namespace 创建权限；不要通过关闭 network/mount/user 隔离或把 API 改成 root 来解决失败。rootfs 更新后再次执行 copy_runtime.py 补齐系统动态库。
 
-Render 需 Chromium：以普通账号执行 backend/.venv/bin/python -m playwright install chromium。Debian/Ubuntu 系统依赖使用 sudo backend/.venv/bin/python -m playwright install-deps chromium。默认 Playwright 浏览器路径即可，或在 render.json 指定 browser_path。
+Render 需 Chromium：以普通账号执行 .venv/bin/python -m playwright install chromium。Debian/Ubuntu 系统依赖使用 sudo .venv/bin/python -m playwright install-deps chromium。默认 Playwright 浏览器路径即可，或在 render.json 指定 browser_path。
 
 ## 4. HTTPS、账号与启动
 
@@ -136,9 +136,9 @@ CORS 填完整 Origin，例如 https://student.example 或 http://localhost:5173
 
 ```bash
 cd /srv/synaxis
-backend/.venv/bin/python main.py --check
-backend/.venv/bin/python main.py --set-admin-password
-backend/.venv/bin/python main.py
+.venv/bin/python main.py --check
+.venv/bin/python main.py --set-admin-password
+.venv/bin/python main.py
 ```
 
 --set-admin-password 在终端输入两次密码，不把明文放命令行/聊天。访问 https://你的地址:5667/admin 登录，可搜索/分页、新建/改名/重设密码/停用/删除学生账号、修改网络 JSON、重启。删账号保留会话与计费历史，ID 不复用；密码或状态变更立即撤销旧学生登录。当前有 queued/running 教学请求时禁止停用/删除用户或重启服务。
@@ -152,7 +152,7 @@ backend/.venv/bin/python main.py
 先停止服务，再把私有数据目录（两份数据库、JWT key、jwt-generation、管理员哈希、附件）与私有配置/环境文件备份到项目之外的受保护目录；检查两份 SQLite PRAGMA quick_check。使用同一 uv.lock 做 uv sync --frozen，运行 --check 和单元测试后启动。升级迁移原地补列，不替换账号、会话、事件 ID、累计预算或密钥。保留匹配旧代码与配置的备份用于回滚；未经核验不要仅把较旧数据库覆盖到运行中的服务。
 
 ```bash
-backend/.venv/bin/python main.py --initialization
+.venv/bin/python main.py --initialization
 ```
 
 该操作持有单实例锁，要求先输入 RESET DATABASES，再输入所显示的完整数据目录。任一步不符即取消且不启动服务。两份数据库先经 SQLite backup API 复制到 data/backups/reset-*，通过 quick_check 并记录 SHA256；全部成功后才删除 synaxis.sqlite3、calls.sqlite3 及其 WAL/SHM，随后正常启动。附件、日志和密钥保留；jwt-generation 更新使旧登录失效。保留的孤立文件不会自动绑定新账号。该参数不会在管理员重启时重复执行。
@@ -163,11 +163,11 @@ backend/.venv/bin/python main.py --initialization
 
 按 [testing.md](testing.md) 运行单元和本地集成验收。后端配置错误必须在使用前解决；/health 与 /v1/capabilities 的 configured 仅指配置成立，不等同于新供应商的真实调用已经验收。Syllabus 就绪状态以实际索引、校验和本地模型初始化结果为准，见上文课标部署步骤。
 
-根与 backend/.gitignore 忽略 .env/自定义 *.env、数据库、密钥/私钥、运行目录、缓存、测试产物、部署备份和 archive；.env.example、配置模板及合成测试输入可提交。忽略规则只影响未跟踪文件，不能移除已提交的秘密；维护者还须检查暂存文件、真实 Git 历史和远程仓库。没有历史可查时不能宣称历史从未泄漏。
+根目录 .gitignore 忽略 .env/自定义 *.env、数据库、密钥/私钥、运行目录、缓存、测试产物、部署备份和 archive；.env.example、配置模板及合成测试输入可提交。忽略规则只影响未跟踪文件，不能移除已提交的秘密；维护者还须检查暂存文件、真实 Git 历史和远程仓库。没有历史可查时不能宣称历史从未泄漏。
 
-导出前扫描包含高置信秘密格式，以及当前 backend/.env 和默认 backend/data/jwt.key、admin-password.hash 的已知值精确匹配；报告只显示位置和类型。它不读取 SQLite，也不自动追踪自定义数据目录或其它机器上的秘密；不能替代完整的秘密管理与 Git 历史扫描。
+导出前扫描包含高置信秘密格式，以及当前 .env 和默认 data/jwt.key、admin-password.hash 的已知值精确匹配；报告只显示位置和类型。它不读取 SQLite，也不自动追踪自定义数据目录或其它机器上的秘密；不能替代完整的秘密管理与 Git 历史扫描。
 
-在 backend 下生成后端公开源码包：
+在仓库根目录生成后端公开源码包：
 
 ```bash
 uv run --frozen python -m runtime.openapi_contract --check
@@ -179,4 +179,4 @@ uv run --frozen python -m runtime.publication --output dist/synaxis-backend.zip
 
 根级 .github/workflows/backend.yml 定义 PR 和推送检查：Windows/Linux 单元测试、Ruff、OpenAPI 基线及源码导出扫描，Linux 额外检查独立解压的源码。实际云端结果以 Actions 运行记录为准。该流程覆盖后端；前端字体、签名、构建和测试输入须由前端维护流程单独处理。CI 通过不代表课标数据、模型权重或其他资源可以再分发。
 
-后端源码与根 main.py 采用 MIT，见根 LICENSE、backend/LICENSE 和 backend/NOTICE。API 标签为 1.0.0，Python 分发元数据使用其 PEP 440 规范形式 1.0.0。该许可不自动覆盖前端、第三方依赖、字体、课标或 embedding 模型；这些资源保留各自授权，源码导出不替代其分发授权审查。
+后端源码与根 main.py 采用 MIT，见 LICENSE 和 NOTICE。API 标签为 1.0.0，Python 分发元数据使用其 PEP 440 规范形式 1.0.0。该许可不自动覆盖前端、第三方依赖、字体、课标或 embedding 模型；这些资源保留各自授权，源码导出不替代其分发授权审查。

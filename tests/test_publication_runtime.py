@@ -12,24 +12,22 @@ from runtime import publication
 @pytest.fixture
 def source_root(tmp_path):
     root = tmp_path / "source"
-    (root / "backend" / "api").mkdir(parents=True)
-    (root / "backend" / "config" / "models").mkdir(parents=True)
-    (root / "backend" / "contracts").mkdir()
-    (root / "backend" / "docs").mkdir()
+    (root / "api").mkdir(parents=True)
+    (root / "config" / "models").mkdir(parents=True)
+    (root / "contracts").mkdir()
+    (root / "docs").mkdir()
     (root / ".github" / "workflows").mkdir(parents=True)
     files = {
         "main.py": "print('entry')\n",
-        "README.md": "Synthetic source entry point\n",
-        ".gitignore": "backend/data/\n",
-        "LICENSE": "Synthetic root license\n",
-        "backend/LICENSE": "Synthetic backend license\n",
-        "backend/NOTICE": "Synthetic third-party resource boundaries\n",
-        "backend/docs/deployment.md": "Synthetic deployment instructions\n",
-        "backend/README.md": "Public backend documentation\n",
-        "backend/.env.example": "TEXT_MAIN_API_KEY=\n",
-        "backend/api/main.py": "VERSION = 'test'\n",
-        "backend/config/models/providers.json": '{"roles": {}}\n',
-        "backend/contracts/openapi.json": '{"openapi": "3.1.0"}\n',
+        ".gitignore": "data/\n",
+        "LICENSE": "Synthetic backend license\n",
+        "NOTICE": "Synthetic third-party resource boundaries\n",
+        "docs/deployment.md": "Synthetic deployment instructions\n",
+        "README.md": "# Backend\n\n[Deployment](docs/deployment.md) [MIT](LICENSE) [NOTICE](NOTICE)\n",
+        ".env.example": "TEXT_MAIN_API_KEY=\n",
+        "api/main.py": "VERSION = 'test'\n",
+        "config/models/providers.json": '{"roles": {}}\n',
+        "contracts/openapi.json": '{"openapi": "3.1.0"}\n',
         ".github/workflows/backend.yml": "name: backend\n",
     }
     for name, content in files.items():
@@ -39,20 +37,20 @@ def source_root(tmp_path):
 
 def test_export_allowlist_excludes_runtime_frontend_and_private_files(source_root, tmp_path):
     private = (
-        "backend/.env",
-        "backend/data/syllabus/model.onnx",
-        "backend/models/model.onnx",
-        "backend/.venv/bin/python",
-        "backend/archive/old.md",
-        "backend/test-results/log.json",
-        "backend/rootfs/main.py",
-        "backend/vendor/main.py",
+        ".env",
+        "data/syllabus/model.onnx",
+        "models/model.onnx",
+        ".venv/bin/python",
+        "archive/old.md",
+        "test-results/log.json",
+        "rootfs/main.py",
+        "vendor/main.py",
         "frontend/src/main.ts",
-        "backend/config/secret.key",
-        "backend/config/copy.pdf",
-        "backend/config/local.env",
-        "backend/config/cache.sqlite3-wal",
-        "backend/config/__pycache__/a.pyc",
+        "config/secret.key",
+        "config/copy.pdf",
+        "config/local.env",
+        "config/cache.sqlite3-wal",
+        "config/__pycache__/a.pyc",
     )
     for name in private:
         path = source_root / name
@@ -62,11 +60,11 @@ def test_export_allowlist_excludes_runtime_frontend_and_private_files(source_roo
     sources = publication.publish(archive, root=source_root)
     with zipfile.ZipFile(archive) as exported:
         assert exported.namelist() == [source.name for source in sources]
-        assert "backend/contracts/openapi.json" in exported.namelist()
+        assert "contracts/openapi.json" in exported.namelist()
         assert ".github/workflows/backend.yml" in exported.namelist()
-        assert "backend/.env.example" in exported.namelist()
-        assert "backend/config/models/providers.json" in exported.namelist()
-        assert "backend/LICENSE" in exported.namelist()
+        assert ".env.example" in exported.namelist()
+        assert "config/models/providers.json" in exported.namelist()
+        assert "LICENSE" in exported.namelist()
         assert "README.md" in exported.namelist()
         assert not set(private).intersection(exported.namelist())
         assert all(info.date_time == (1980, 1, 1, 0, 0, 0) for info in exported.infolist())
@@ -89,9 +87,6 @@ def test_standalone_archive_has_only_backend_workflow_and_existing_readme_links(
         (source_root / ".github" / "workflows" / name).write_text(
             "Synthetic workflow that requires omitted sources\n", encoding="utf-8"
         )
-    (source_root / "README.md").write_text(
-        "# Monorepo\n\n[Client](frontend/README.md)\n", encoding="utf-8"
-    )
     output = tmp_path / "standalone.zip"
     publication.publish(output, root=source_root)
     with zipfile.ZipFile(output) as archive:
@@ -99,12 +94,13 @@ def test_standalone_archive_has_only_backend_workflow_and_existing_readme_links(
         assert workflows == [".github/workflows/backend.yml"]
         readme = archive.read("README.md").decode()
         assert "frontend/" not in readme
-        assert "[backend/README.md](backend/README.md)" in readme
+        assert "[Deployment](docs/deployment.md)" in readme
         assert "[MIT](LICENSE)" in readme
-        assert "[backend/NOTICE](backend/NOTICE)" in readme
+        assert "[NOTICE](NOTICE)" in readme
         targets = re.findall(r"\[[^]]+\]\(([^)]+)\)", readme)
         assert targets and all(target in archive.namelist() for target in targets)
-    assert "[Client](frontend/README.md)" in (source_root / "README.md").read_text(encoding="utf-8")
+    assert not (source_root / "backend").exists()
+    assert readme == (source_root / "README.md").read_bytes().decode("utf-8")
 
 
 def test_standalone_archive_reexports_identically_without_frontend(source_root, tmp_path):
@@ -131,7 +127,7 @@ def test_standalone_archive_does_not_read_omitted_workflows(source_root, monkeyp
     assert publication.publish(root=source_root)
 
 
-@pytest.mark.parametrize("relative", ["backend/api/result.zip", "backend/../escape.zip", "other.zip"])
+@pytest.mark.parametrize("relative", ["api/result.zip", "../escape.zip", "other.zip"])
 def test_output_must_not_overlap_sources_or_traverse(source_root, relative):
     with pytest.raises(publication.PublicationError, match="Output"):
         publication.publish(source_root / relative, root=source_root)
@@ -143,11 +139,11 @@ def test_export_never_overwrites_existing_output(source_root, tmp_path):
     with pytest.raises(publication.PublicationError, match="already exists"):
         publication.publish(output, root=source_root)
     assert output.read_bytes() == b"keep"
-    publication.publish(source_root / "backend" / "dist" / "new.zip", root=source_root)
+    publication.publish(source_root / "dist" / "new.zip", root=source_root)
 
 
 def test_linked_source_is_rejected_before_name_exclusion(source_root, monkeypatch):
-    target = source_root / "backend" / "config" / "private.key"
+    target = source_root / "config" / "private.key"
     target.write_text("never follow", encoding="utf-8")
     original = publication._is_link
     monkeypatch.setattr(publication, "_is_link", lambda path: path == target or original(path))
@@ -156,7 +152,7 @@ def test_linked_source_is_rejected_before_name_exclusion(source_root, monkeypatc
 
 
 def test_real_symlink_and_linked_output_directory_are_rejected(source_root, tmp_path):
-    link = source_root / "backend" / "api" / "linked.py"
+    link = source_root / "api" / "linked.py"
     try:
         link.symlink_to(source_root / "main.py")
     except OSError:
@@ -165,13 +161,13 @@ def test_real_symlink_and_linked_output_directory_are_rejected(source_root, tmp_
         publication.publish(root=source_root)
     link.unlink()
     directory = tmp_path / "linked-output"
-    directory.symlink_to(source_root / "backend", target_is_directory=True)
+    directory.symlink_to(source_root, target_is_directory=True)
     with pytest.raises(publication.PublicationError, match="link"):
         publication.publish(directory / "publication.zip", root=source_root)
 
 
 def test_binary_and_unknown_source_types_are_rejected(source_root):
-    path = source_root / "backend" / "api" / "hidden.py"
+    path = source_root / "api" / "hidden.py"
     path.write_bytes(b"prefix\0binary")
     with pytest.raises(publication.PublicationError, match="Binary source"):
         publication.publish(root=source_root)
@@ -182,7 +178,7 @@ def test_binary_and_unknown_source_types_are_rejected(source_root):
 
 
 def test_non_utf8_and_oversized_sources_fail_closed(source_root, monkeypatch):
-    path = source_root / "backend" / "api" / "bad.py"
+    path = source_root / "api" / "bad.py"
     path.write_bytes(b"\xff\xfe")
     with pytest.raises(publication.PublicationError, match="Non-UTF-8"):
         publication.publish(root=source_root)
@@ -194,7 +190,7 @@ def test_non_utf8_and_oversized_sources_fail_closed(source_root, monkeypatch):
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows prevents nonportable filenames itself")
 def test_windows_traversal_name_and_case_collisions_are_rejected(source_root):
-    path = source_root / "backend" / "api" / "..\\evil.py"
+    path = source_root / "api" / "..\\evil.py"
     path.write_text("unsafe", encoding="utf-8")
     with pytest.raises(publication.PublicationError, match="not portable"):
         publication.publish(root=source_root)
@@ -206,29 +202,29 @@ def test_windows_traversal_name_and_case_collisions_are_rejected(source_root):
 
 @pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="Native FIFO requires POSIX")
 def test_special_source_file_is_rejected(source_root):
-    os.mkfifo(source_root / "backend" / "api" / "pipe.py")
+    os.mkfifo(source_root / "api" / "pipe.py")
     with pytest.raises(publication.PublicationError, match="Non-regular source"):
         publication.publish(root=source_root)
 
 
 def test_secret_reports_only_location_and_kind_and_never_creates_zip(source_root, tmp_path):
     secret = "sk-" + "Q7bP2xMv" * 6
-    path = source_root / "backend" / "api" / "unsafe.py"
+    path = source_root / "api" / "unsafe.py"
     path.write_text("# comment\nKEY = '" + secret + "'\n", encoding="utf-8")
     output = tmp_path / "blocked.zip"
     with pytest.raises(publication.PublicationError) as caught:
         publication.publish(output, root=source_root)
-    assert "backend/api/unsafe.py:2: provider-api-key" in str(caught.value)
+    assert "api/unsafe.py:2: provider-api-key" in str(caught.value)
     assert secret not in str(caught.value)
     assert not output.exists()
 
 
 def test_known_dotenv_secret_exact_match_is_redacted(source_root):
     secret = "local-test-value-" + "1234567890"
-    (source_root / "backend" / ".env").write_text(
+    (source_root / ".env").write_text(
         'TEXT_MAIN_API_KEY="' + secret + '"\nTEXT_MAIN_MODEL=not-secret-model-name\n', encoding="utf-8"
     )
-    source = source_root / "backend" / "api" / "bad.py"
+    source = source_root / "api" / "bad.py"
     source.write_text("copied_value = '" + secret + "'\n", encoding="utf-8")
     with pytest.raises(publication.PublicationError) as caught:
         publication.publish(root=source_root)
@@ -239,22 +235,22 @@ def test_known_dotenv_secret_exact_match_is_redacted(source_root):
 
 @pytest.mark.parametrize("filename", ["jwt.key", "admin-password.hash"])
 def test_default_storage_secret_exact_matches_are_redacted(source_root, filename):
-    storage = source_root / "backend" / "data"
+    storage = source_root / "data"
     storage.mkdir()
     secret = "synthetic-" + filename + "-" + "0123456789" * 4
     (storage / filename).write_text(secret + "\n", encoding="utf-8")
-    source = source_root / "backend" / "api" / "bad.py"
+    source = source_root / "api" / "bad.py"
     source.write_text("accidental_copy = '" + secret + "'\n", encoding="utf-8")
     with pytest.raises(publication.PublicationError) as caught:
         publication.publish(root=source_root)
-    assert "backend/api/bad.py:1: known-local-secret" in str(caught.value)
+    assert "api/bad.py:1: known-local-secret" in str(caught.value)
     assert secret not in str(caught.value)
-    assert all(not item.name.startswith("backend/data/") for item in publication.collect_sources(source_root))
+    assert all(not item.name.startswith("data/") for item in publication.collect_sources(source_root))
 
 
 @pytest.mark.parametrize("filename", ["jwt.key", "admin-password.hash"])
 def test_default_secret_storage_rejects_links_and_oversized_files(source_root, filename, monkeypatch):
-    storage = source_root / "backend" / "data"
+    storage = source_root / "data"
     storage.mkdir()
     path = storage / filename
     path.write_bytes(b"x" * (16 * 1024 + 1))
@@ -268,7 +264,7 @@ def test_default_secret_storage_rejects_links_and_oversized_files(source_root, f
 
 
 def test_default_secret_storage_directory_is_not_followed(source_root, monkeypatch):
-    storage = source_root / "backend" / "data"
+    storage = source_root / "data"
     storage.mkdir()
     original = publication._is_link
     monkeypatch.setattr(publication, "_is_link", lambda candidate: candidate == storage or original(candidate))
@@ -279,10 +275,10 @@ def test_default_secret_storage_directory_is_not_followed(source_root, monkeypat
 def test_patterns_cover_private_key_and_ignore_short_invalid_url_fixture():
     private_header = "-----BEGIN " + "PRIVATE KEY-----"
     token = "ghp_" + "Q7bP2xMv" * 5
-    source = publication.SourceFile("backend/example.py", (private_header + "\n" + token).encode())
+    source = publication.SourceFile("example.py", (private_header + "\n" + token).encode())
     findings = publication.scan_sources((source,))
     assert [(item.line, item.kind) for item in findings] == [(1, "private-key"), (2, "github-token")]
-    harmless = publication.SourceFile("backend/test.py", b"URL='https://sk-invalid-url@example.test'\n")
+    harmless = publication.SourceFile("test.py", b"URL='https://sk-invalid-url@example.test'\n")
     assert not publication.scan_sources((harmless,))
 
 
@@ -291,7 +287,7 @@ def test_cli_success_and_failure_are_safe(source_root, monkeypatch, capsys):
     monkeypatch.setattr(publication, "publish", lambda output: actual_publish(output, root=source_root))
     assert publication.main(["--check"]) == 0
     assert "files" in capsys.readouterr().out
-    (source_root / "backend" / "api" / "bad.py").write_text(
+    (source_root / "api" / "bad.py").write_text(
         "-----BEGIN " + "OPENSSH PRIVATE KEY-----", encoding="utf-8"
     )
     assert publication.main(["--check"]) == 1

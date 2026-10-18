@@ -11,7 +11,7 @@ WorkingDirectory=/srv/synaxis
 Environment=SYNAXIS_CONFIG_DIR=/srv/synaxis-data/config
 Environment=SYNAXIS_ENV_FILE=/srv/synaxis-data/service.env
 Environment=DATA_DIR=/srv/synaxis-data
-ExecStart=/srv/synaxis/backend/.venv/bin/python /srv/synaxis/main.py
+ExecStart=/srv/synaxis/.venv/bin/python /srv/synaxis/main.py
 Restart=on-failure
 RestartSec=5
 KillMode=control-group
