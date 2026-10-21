@@ -1,8 +1,8 @@
 # 部署与配置 / Deployment and configuration
 
-适用 API 版本 1.0.0-hotfix1；所有后端部署步骤集中在本文。学生 API 和展示规则另见 [frontend-contract.md](frontend-contract.md)。需要 Python 3.12 与 uv；生产运行 Linux、一个应用 worker，nsjail 与 API 在同一台机器。主入口是项目根 main.py，沙盒不需要独立监听端口。
+部署后，Synaxis 提供教学 API、实时讲解、学生账号和管理面板；搜索、隔离计算、图形渲染与本地课标检索按需配置。本文覆盖安装、模型配置、工具启用、常驻服务、备份和更新，适用 API 版本 1.0.0-hotfix1。
 
-本仓库可直接克隆部署；启动入口、依赖和 CI 均位于仓库根目录。
+服务入口为仓库根 `main.py`，需要 Python 3.12 与 uv。完整工具环境使用 Linux；nsjail 与 API 在同一台机器。客户端请求与展示格式见 [frontend-contract.md](frontend-contract.md)。
 
 ## 1. 环境与依赖
 

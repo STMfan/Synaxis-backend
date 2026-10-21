@@ -1,6 +1,6 @@
 # Frontend contract / 前端契约：API 1.0.0-hotfix1，展示格式 1.0
 
-当前机器可读契约为 contracts/openapi.json，由后端生成并由 CI 核对；可用于客户端生成类型。字段、事件和状态语义需一并检查，不能仅用路径数量判断兼容。本文描述后端接口，不代表某个前端构建或设备已完成验收。
+本接口可用于构建 Web、桌面或移动教学客户端：完成账号登录，提交文字与题图，接收实时图文讲解，在会话中追问、答题，并读取历史、费用和课标来源。本文说明请求、事件与展示块的实际含义；机器可读定义见 [OpenAPI](../contracts/openapi.json)。
 
 Bearer JWT 放在 `Authorization` 请求头。禁止把 token 放 URL；浏览器 SSE 用 `fetch` 的 ReadableStream，原生 EventSource 不能设置该请求头。每条 SSE 的 `id` 是持久化事件 ID；重连传 `after` 或 `Last-Event-ID`，按 ID 去重。`waiting/completed/failed/cancelled` 后流关闭，回答追问后重新订阅。断开流不会取消教学调用，取消需使用 API。
 
@@ -28,7 +28,7 @@ Bearer JWT 放在 `Authorization` 请求头。禁止把 token 放 URL；浏览�
 | branch | selected, tabs | 每个 tab 有 id/label/blocks，selected 必须存在；点击切换，只渲染当前 tab；不嵌套 branch |
 | localfile | artifact_id, label | 带 JWT 下载文件；PNG 可转 Blob/ObjectURL 展示，日志显示为下载链接；没有本地路径 |
 
-`plan` 事件包含科目、专家、任务和技能；`tool` 是进度数据，不作为可信 HTML 渲染。只展示公开教学结果。`warning` 可能表示 Formatter 失败：后端会提供仍符合 JSON schema 的回退并保留追问。在结构可识别时保留合法叶块及原位文件，只对错误叶块引用原文；`fallback=markdown` 表示存在降级叶块，不能假定整篇只有文字。回退不能被展示为“严格 Formatter 验收成功”。
+`plan` 事件包含科目、专家、任务和技能；`tool` 是进度数据，不作为可信 HTML 渲染。只展示公开教学结果。`warning` 可能表示 Formatter 失败：后端会提供仍符合 JSON schema 的回退并保留追问。在结构可识别时保留合法叶块及原位文件，只对错误叶块引用原文；`fallback=markdown` 表示存在降级叶块，不能假定整篇只有文字。
 
 ## 实时输出 / Live output
 
