@@ -234,6 +234,8 @@ def test_import_is_portable_atomic_and_does_not_overwrite(corpus, tmp_path, monk
     assert all((target / "models" / name).is_file() for name in MODEL_FILES)
     assert digest(target / "data/curriculum.sqlite3") == original
     assert (target / "import.json").is_file()
+    assert "MIT License" in (target / "models/MODEL-LICENSE.txt").read_text(encoding="utf-8")
+    assert "models/MODEL-LICENSE.txt" in receipt["files"]
     with pytest.raises(ValueError, match="exists"):
         import_bundle(corpus, target)
     monkeypatch.setattr(
@@ -253,6 +255,42 @@ def test_import_rejects_different_original_pdf(corpus, tmp_path):
     with pytest.raises(ValueError, match="PDF checksum"):
         import_bundle(corpus, tmp_path / "rejected")
     assert not (tmp_path / "rejected").exists()
+
+
+def test_import_accepts_portable_bundle_without_hf_cache_or_process_report(corpus, tmp_path):
+    portable = tmp_path / "portable"
+    original = import_bundle(corpus, portable)
+    assert not (portable / "data/validation.json").exists()
+    (portable / "data/source_pages.jsonl").unlink()
+    receipt_path = portable / "import.json"
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    del receipt["files"]["data/source_pages.jsonl"]
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    destination = tmp_path / "deployed"
+    deployed = import_bundle(portable, destination)
+    assert deployed["model_revision"] == original["model_revision"]
+    assert deployed["chunks"] == 3 and SyllabusIndex(destination / "data").search("函数", mode="lexical", top_k=5)
+    assert not (destination / "data/validation.json").exists()
+    assert not (destination / "data/source_pages.jsonl").exists()
+
+
+@pytest.mark.parametrize("corruption", ["model", "receipt", "license"])
+def test_portable_import_rejects_tampered_model_or_receipt(corpus, tmp_path, corruption):
+    portable = tmp_path / "portable"
+    import_bundle(corpus, portable)
+    if corruption == "model":
+        (portable / "models/model_optimized.onnx").write_bytes(b"tampered-model")
+    elif corruption == "license":
+        (portable / "models/MODEL-LICENSE.txt").write_bytes(b"tampered-license")
+    else:
+        receipt_path = portable / "import.json"
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt["chunks"] += 1
+        receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    destination = tmp_path / "rejected"
+    with pytest.raises(ValueError):
+        import_bundle(portable, destination)
+    assert not destination.exists()
 
 
 def test_embedder_is_local_only_and_rejects_overflow_before_inference(tmp_path, monkeypatch):

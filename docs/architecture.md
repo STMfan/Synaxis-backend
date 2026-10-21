@@ -32,4 +32,4 @@ SyllabusService 由应用启动时创建，供 Expert/Assistant 工具与鉴权�
 
 公开 API 标签由 core/version.py 维护；Python 分发版本采用 PEP 440 形式。runtime.openapi_contract 在不读取私有环境、启动服务或加载真实课标的条件下生成公开 OpenAPI，contracts/openapi.json 为提交的基线。--check 核对基线与源码，--against 可对先前消费者契约执行保守的协议结构检查；通过不证明全部业务语义兼容。学生 API 与管理员私有接口保持分离。
 
-runtime.publication 维护公开源码边界和秘密扫描；运行数据、环境文件、课标/模型、沙盒、测试结果与历史材料不属于源码导出。独立后端包只导出根 backend.yml 工作流，并用专属入口 README 替换整仓说明，不依赖其他模块源码。根级 CI 定义干净源码的单元、契约和导出检查，可选真实集成与外部供应商验收独立进行，实际云端状态以运行记录为准。
+runtime.publication 维护独立后端仓库的源码白名单与秘密扫描，保留仓库根 README 和后端工作流；运行数据、环境文件、课标/模型、沙盒及测试输出不进入导出。检查方法见 [testing.md](testing.md)，源码导出见 [deployment.md](deployment.md)。

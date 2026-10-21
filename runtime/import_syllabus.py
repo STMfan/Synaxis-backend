@@ -8,7 +8,33 @@ import tempfile
 from pathlib import Path
 
 from core.settings import Settings
-from storage.syllabus import DATA_FILES, MODEL_FILES, SyllabusIndex, digest
+from storage.syllabus import DATA_FILES, MODEL_FILES, SyllabusIndex, digest, verify_imported_files
+
+
+def model_source(source, index):
+    """Accept a verified portable bundle or the original local HF cache layout."""
+    receipt_path = source / "import.json"
+    if receipt_path.is_file():
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt["schema_version"] != "1.0"
+            or receipt["edition"] != index.manifest["edition"]
+            or receipt["chunks"] != len(index.chunks)
+            or receipt["sections"] != len(index.sections)
+        ):
+            raise ValueError("Portable bundle receipt does not match its index")
+        snapshot = source / "models"
+        verify_imported_files(snapshot, MODEL_FILES, "models")
+        revision = receipt["model_revision"]
+    else:
+        model_cache = source / "models/models--Qdrant--bge-small-zh-v1.5"
+        revision = (model_cache / "refs/main").read_text(encoding="utf-8").strip()
+        snapshot = model_cache / "snapshots" / revision
+    if not isinstance(revision, str) or len(revision) != 40 or any(c not in "0123456789abcdef" for c in revision):
+        raise ValueError("Invalid local model revision")
+    if not all((snapshot / name).is_file() for name in MODEL_FILES):
+        raise ValueError("Local curriculum model missing")
+    return snapshot, revision
 
 
 def import_bundle(source, destination):
@@ -31,11 +57,7 @@ def import_bundle(source, destination):
             if digest(pdf) != document["source_sha256"]:
                 raise ValueError("Source PDF checksum mismatch")
             verified_pdfs += 1
-    model_cache = source / "models/models--Qdrant--bge-small-zh-v1.5"
-    revision = (model_cache / "refs/main").read_text(encoding="utf-8").strip()
-    if len(revision) != 40 or any(c not in "0123456789abcdef" for c in revision):
-        raise ValueError("Invalid local model revision")
-    snapshot = model_cache / "snapshots" / revision
+    snapshot, revision = model_source(source, index)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".syllabus-import-", dir=destination.parent) as temporary:
         staged = Path(temporary).resolve() / "bundle"
@@ -43,12 +65,23 @@ def import_bundle(source, destination):
             raise ValueError("Import staging escaped destination")
         (staged / "data").mkdir(parents=True)
         (staged / "models").mkdir()
-        for name in DATA_FILES + ("source_pages.jsonl", "validation.json"):
+        for name in DATA_FILES:
             shutil.copyfile(source / "data" / name, staged / "data" / name)
+        # Keep optional page provenance, but do not ship historical validation reports.
+        if (source / "data/source_pages.jsonl").is_file():
+            verify_imported_files(source / "data", ["source_pages.jsonl"], "data")
+            shutil.copyfile(source / "data/source_pages.jsonl", staged / "data/source_pages.jsonl")
         # Dereference the HF cache's links into portable regular files. No venv,
         # extraction code, duplicate ONNX blobs or absolute cache links are copied.
         for name in MODEL_FILES:
             shutil.copyfile(snapshot / name, staged / "models" / name)
+        notice = snapshot / "MODEL-LICENSE.txt"
+        if notice.is_file():
+            if (source / "import.json").is_file():
+                verify_imported_files(snapshot, [notice.name], "models")
+        else:
+            notice = Path(__file__).resolve().parents[1] / "deploy/syllabus-model-LICENSE.txt"
+        shutil.copyfile(notice, staged / "models/MODEL-LICENSE.txt")
         SyllabusIndex(staged / "data")
         receipt = {
             "schema_version": "1.0",

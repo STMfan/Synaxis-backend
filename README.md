@@ -1,4 +1,4 @@
-# Synaxis backend 1.0.0
+# Synaxis backend 1.0.0-hotfix1
 
 源码仓库：[STMfan/Synaxis-backend](https://github.com/STMfan/Synaxis-backend)。学生客户端独立维护于 [STMfan/Synaxis-frontend](https://github.com/STMfan/Synaxis-frontend)。
 
@@ -30,7 +30,7 @@ Windows 启动器会使用已有 .venv。Linux 请在对应 uv 虚拟环境中�
 
 默认地址 http://127.0.0.1:5667，文档 /docs?lang=zh 或 /docs?lang=en，管理面板 /admin。管理员密码独立设置，无默认密码；局域网管理必须使用 HTTPS。
 
-Syllabus 支持已接入的 2017 年版 9 科课标包，提供离线词项、向量与混合检索，保留原文、PDF 页码和来源哈希。源码不分发课标数据或模型；未导入时明确报告 unavailable，其他教学功能仍可使用。导入与迁移见部署指引。
+Syllabus 的本地提取与检索工具独立开源于 [Synaxis-Syllabus2017](https://github.com/STMfan/Synaxis-Syllabus2017)。后端支持已接入的 2017 年版 9 科课标包，提供离线词项、向量与混合检索，保留原文、PDF 页码和来源哈希。源码不分发课标数据或模型；未导入时明确报告 unavailable，其他教学功能仍可使用。导入与迁移见部署指引。
 
 非涉密配置位于 config/runtime 和 config/models；学科提示词位于 config/ExpertsPrompts。密钥保存在私有 .env 或环境变量。旧 DeepSeek/SiliconFlow 变量兼容，新部署使用 .env.example 的 TEXT_* 角色格式。
 

@@ -3683,7 +3683,7 @@
   "info": {
     "description": "Lightweight teaching harness: Planner → Expert/Skills → validation, Formatter when needed.",
     "title": "Synaxis Teaching API",
-    "version": "1.0.0"
+    "version": "1.0.0-hotfix1"
   },
   "openapi": "3.1.0",
   "paths": {

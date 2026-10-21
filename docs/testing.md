@@ -40,10 +40,10 @@ pytest --basetemp 会重建指定目录，不能指向业务数据、备份或�
 | nsjail 输入/AST、隔离参数、输出限额与执行开关 | test_v040_sandbox |
 | 课标完整性、词项/向量/RRF、过滤、导入、离线与取消边界 | test_v050_syllabus |
 | 环境变量隔离、合成测试输入与外连阻断 | test_isolation |
-| 预览版元信息、当前 OpenAPI 基线及保守兼容检查 | test_release_contract |
+| 版本元信息、当前 OpenAPI 基线及保守兼容检查 | test_release_contract |
 | 源码白名单、秘密扫描、链接拒绝和可重复导出 | test_publication_runtime |
 
-## API 契约与源码导出
+## API 契约
 
 contracts/openapi.json 是从当前后端生成的公开基线，供客户端生成类型和核对契约。修改 API 后，先检查保留操作、请求/响应及 SSE 字段的兼容性，再有意更新基线；不能仅靠路径数量一致判断兼容。
 
@@ -51,19 +51,17 @@ contracts/openapi.json 是从当前后端生成的公开基线，供客户端生
 uv run --frozen python -m runtime.openapi_contract --check
 uv run --frozen python -m runtime.openapi_contract --check --against /absolute/path/to/previous-openapi.json
 uv run --frozen python -m runtime.openapi_contract --write
-uv run --frozen python -m runtime.publication --check
-uv run --frozen python -m runtime.publication --output dist/synaxis-backend.zip
 ```
 
 --write 用于维护者更新基线，--check 仅核对当前源码与提交的基线是否一致。--against 额外比较先前消费者保存的 OpenAPI：旧操作、鉴权、参数、请求、成功响应和 SSE 结构变更要求审阅；新增路径等兼容增加允许通过。该保守检查不是全部业务语义的兼容证明，不代替客户端回归。契约生成不启动服务，不创建业务数据库，也不依赖私有配置或真实语料。
 
-前端可使用当前基线生成类型；后端检查不代表前端实现、打包或实体设备已验收。publication --check 仅扫描候选源码；--output 在扫描通过后创建新 ZIP，不覆盖已存在的归档，重复导出应选择新文件名。独立后端包只包含 backend.yml 工作流，并生成专属根 README；单元回归会核对入口链接均存在、其他模块工作流不被读取，以及解压后再次导出内容一致。
+前端可使用当前基线生成类型；后端检查不代表前端实现、打包或实体设备已验收。源码导出命令与秘密扫描边界统一维护在 [部署指引](deployment.md)。导出回归检查仓库根 README 保持不变、入口链接存在、只保留后端工作流，以及解压后再次导出内容一致。
 
 将导出包解压到新的目录，重新运行本页“干净源码回归”，不复制工作区 .env、data、test-results 或 archive。根级 .github/workflows/backend.yml 定义 Windows/Linux、Python 3.12、uv 0.13.0 检查，涵盖单元、Ruff、契约和导出秘密扫描；Linux 还会在独立解压目录重新安装与检查。重型集成不默认进入普通 PR 检查，云端通过状态以实际 Actions 运行结果为准。源码扫描只证明被检查的文件未命中当前规则，真实 Git 历史仍须单独审查。
 
 ## Linux HTTPS / 浏览器 / 沙盒集成
 
-按 [deployment.md](deployment.md) 准备本机 nsjail、专用 rootfs、Playwright Chromium 和 openssl。以下命令在 backend 下运行，路径由部署者按实际环境填写：
+按 [deployment.md](deployment.md) 准备本机 nsjail、专用 rootfs、Playwright Chromium 和 openssl。以下命令在仓库根目录运行，路径由部署者按实际环境填写：
 
 ```bash
 TEST_RUNTIME=/absolute/path/to/test-runtime

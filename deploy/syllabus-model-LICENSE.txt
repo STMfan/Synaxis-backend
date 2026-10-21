@@ -1,0 +1,45 @@
+Model license and attribution — Synaxis-Syllabus2017 portable bundle
+
+Base model: BAAI/bge-small-zh-v1.5
+Base model card: https://huggingface.co/BAAI/bge-small-zh-v1.5
+ONNX distribution: Qdrant/bge-small-zh-v1.5
+ONNX revision: 46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59
+Pinned ONNX model card: https://huggingface.co/Qdrant/bge-small-zh-v1.5/resolve/46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59/README.md
+
+The BAAI and Qdrant model cards identify this model as MIT licensed. The
+pinned Qdrant repository has no separate LICENSE file. The complete MIT
+text below is reproduced verbatim from the official FlagEmbedding project
+linked by the BAAI model card. Its upstream copyright line is preserved;
+no new model copyright holder or broader permission is asserted here.
+
+MIT text source: https://raw.githubusercontent.com/FlagOpen/FlagEmbedding/c086741f5e117b7b8ce1745ea00b6c262f281a01/LICENSE
+
+Keep this notice with copied ONNX and tokenizer files. This model MIT
+notice does not replace the Synaxis-Syllabus2017 application's AGPL
+license. Neither software license grants rights to redistribute curriculum
+PDFs, extracted curriculum text, indexes or other third-party content.
+
+----- BEGIN UPSTREAM MIT LICENSE (VERBATIM) -----
+MIT License
+
+Copyright (c) 2022 staoxiao
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----- END UPSTREAM MIT LICENSE -----

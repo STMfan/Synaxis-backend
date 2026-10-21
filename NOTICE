@@ -11,7 +11,10 @@ The optional curriculum corpus contains material extracted from supplied
 2017 curriculum-standard PDFs. Those texts, source PDFs, provenance records
 and downloaded ONNX/tokenizer files are not re-licensed by the project's MIT
 grant and are not included in the public source export. Obtain and use them
-under their respective permissions. Corpus import and index validation do
+under their respective permissions. The independent extraction/search tooling
+is maintained at https://github.com/STMfan/Synaxis-Syllabus2017 under its own
+AGPL-3.0-or-later license. This backend reads generated files and does not
+import that application or PyMuPDF. Corpus import and index validation do
 not establish redistribution rights or certify a complete examination scope.
 
 The frontend, its fonts, artwork, plugins, packaging and signing materials

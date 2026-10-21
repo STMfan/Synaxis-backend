@@ -45,13 +45,14 @@ def fixture_contract():
     }
 
 
-def test_stable_version_license_and_locked_metadata():
+def test_hotfix_version_license_and_locked_metadata():
     root = Path(__file__).resolve().parents[1]
     metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     lock = tomllib.loads((root / "uv.lock").read_text(encoding="utf-8"))
-    assert VERSION == "1.0.0"
-    assert not Version(VERSION).is_prerelease
-    assert str(Version(VERSION)) == DISTRIBUTION_VERSION == metadata["version"]
+    assert VERSION == "1.0.0-hotfix1"
+    assert Version(DISTRIBUTION_VERSION).is_postrelease
+    assert not Version(DISTRIBUTION_VERSION).is_prerelease
+    assert DISTRIBUTION_VERSION == "1.0.0.post1" == metadata["version"]
     assert next(p["version"] for p in lock["package"] if p["name"] == "synaxis") == DISTRIBUTION_VERSION
     assert metadata["license"] == "MIT" and "LICENSE" in metadata["license-files"]
     assert (root / "LICENSE").is_file() and (root / "NOTICE").is_file()

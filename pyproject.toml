@@ -1,6 +1,6 @@
 [project]
 name = "synaxis"
-version = "1.0.0"
+version = "1.0.0.post1"
 license = "MIT"
 license-files = ["LICENSE", "NOTICE"]
 description = "A lightweight teaching LLM harness / 轻量教学 LLM 框架"

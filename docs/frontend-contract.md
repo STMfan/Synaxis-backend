@@ -1,4 +1,4 @@
-# Frontend contract / 前端契约：API 1.0.0，展示格式 1.0
+# Frontend contract / 前端契约：API 1.0.0-hotfix1，展示格式 1.0
 
 当前机器可读契约为 contracts/openapi.json，由后端生成并由 CI 核对；可用于客户端生成类型。字段、事件和状态语义需一并检查，不能仅用路径数量判断兼容。本文描述后端接口，不代表某个前端构建或设备已完成验收。
 

@@ -1,6 +1,6 @@
 # 部署与配置 / Deployment and configuration
 
-适用 API 版本 1.0.0；所有后端部署步骤集中在本文。学生 API 和展示规则另见 [frontend-contract.md](frontend-contract.md)。需要 Python 3.12 与 uv；生产运行 Linux、一个应用 worker，nsjail 与 API 在同一台机器。主入口是项目根 main.py，沙盒不需要独立监听端口。
+适用 API 版本 1.0.0-hotfix1；所有后端部署步骤集中在本文。学生 API 和展示规则另见 [frontend-contract.md](frontend-contract.md)。需要 Python 3.12 与 uv；生产运行 Linux、一个应用 worker，nsjail 与 API 在同一台机器。主入口是项目根 main.py，沙盒不需要独立监听端口。
 
 本仓库可直接克隆部署；启动入口、依赖和 CI 均位于仓库根目录。
 
@@ -72,14 +72,14 @@ reasoning_parameter 可为 none、reasoning_effort 或 enable_thinking，reasoni
 
 使用指定的 2017 年版检索包，不替换为其它年份：9 科、261 个父章节、567 个片段，范围为必修、选择性必修及适用的共用课程内容。课程方案在源包中为 not_applicable；不包含独立高考考纲或各省考试细则。数学公式和部分图形提取有局限，原有 quality_warnings 会随命中返回，精确表达需查原 PDF。
 
-先同步 uv 环境，在 backend 下导入用户提供的完整包目录：
+提取、索引和本地生成步骤统一维护在独立仓库 [Synaxis-Syllabus2017](https://github.com/STMfan/Synaxis-Syllabus2017)。先在该仓库按授权要求取得 PDF 并生成便携包；然后在本后端仓库根目录导入：
 
 ```bash
 uv sync --frozen
 uv run --frozen python -m runtime.import_syllabus "/absolute/path/to/curriculum-package"
 ```
 
-默认目标为当前 DATA_DIR/syllabus；干净源码中不包含该目录，须由部署者提供有权使用的完整课标包。导入校验源库、向量/文本哈希、ID 和来源对应关系，存在原 PDF 时也校验其哈希；不会重新提取或重新生成向量。索引及元数据复制到 data/，配套 ONNX/tokenizer 复制成 models/ 下的普通文件，原 HF 缓存链接不会成为部署依赖。import.json 保存导入收据、模型 revision 和文件哈希。原包、原 PDF、业务库均不改动，已存在的目标目录拒绝覆盖。
+默认目标为当前 DATA_DIR/syllabus；干净源码中不包含该目录，须由部署者提供有权使用的完整课标包。支持独立仓库生成的扁平 `data/`、`models/`、`import.json` 便携包，也兼容旧版 HF 缓存包；扁平包会核对收据、数据及模型哈希，并保留模型的独立 MIT 许可全文；源包中的历史 validation.json 不再复制。导入校验源库、向量/文本哈希、ID 和来源对应关系，存在原 PDF 时也校验其哈希；不会重新提取或重新生成向量。索引及元数据复制到 data/，配套 ONNX/tokenizer 复制成 models/ 下的普通文件，原 HF 缓存链接不会成为部署依赖。import.json 保存导入收据、模型 revision 和文件哈希。原包、原 PDF、业务库均不改动，已存在的目标目录拒绝覆盖。
 
 迁移时复制整个 syllabus 目录，不能只复制 curriculum.sqlite3；它还依赖 chunks/sections/manifest、vectors.npy/vectors.json 与配套模型。数据/模型与源码分开，不提交到 Git；没有把下载目录或原包的 .venv 写入运行配置。只读访问，不另起 HTTP 服务，不增加端口，不调用云端 embedding。FastEmbed 固定 0.9.0，沿用 BAAI/bge-small-zh-v1.5 的 512 维 ONNX 模型与 query_embed 编码；参考 [官方模型表](https://qdrant.github.io/fastembed/examples/Supported_Models/)。
 
@@ -117,7 +117,7 @@ PYDIR=$(dirname "$(dirname "$PYBIN")")
 cp -a "$PYDIR/." /srv/synaxis-runtime/rootfs/opt/python/
 ln -s /opt/python/bin/python3.12 /srv/synaxis-runtime/rootfs/usr/bin/python3
 cd /srv/synaxis
-uv export --project backend --frozen --only-group sandbox --no-hashes --no-emit-project > /srv/synaxis-runtime/sandbox-requirements.txt
+uv export --frozen --only-group sandbox --no-hashes --no-emit-project > /srv/synaxis-runtime/sandbox-requirements.txt
 uv pip install --python /srv/synaxis-runtime/rootfs/opt/python/bin/python3.12 --break-system-packages -r /srv/synaxis-runtime/sandbox-requirements.txt
 .venv/bin/python deploy/copy_runtime.py /srv/synaxis-runtime/rootfs
 ```
@@ -179,4 +179,4 @@ uv run --frozen python -m runtime.publication --output dist/synaxis-backend.zip
 
 根级 .github/workflows/backend.yml 定义 PR 和推送检查：Windows/Linux 单元测试、Ruff、OpenAPI 基线及源码导出扫描，Linux 额外检查独立解压的源码。实际云端结果以 Actions 运行记录为准。该流程覆盖后端；前端字体、签名、构建和测试输入须由前端维护流程单独处理。CI 通过不代表课标数据、模型权重或其他资源可以再分发。
 
-后端源码与根 main.py 采用 MIT，见 LICENSE 和 NOTICE。API 标签为 1.0.0，Python 分发元数据使用其 PEP 440 规范形式 1.0.0。该许可不自动覆盖前端、第三方依赖、字体、课标或 embedding 模型；这些资源保留各自授权，源码导出不替代其分发授权审查。
+后端源码与根 main.py 采用 MIT，见 LICENSE 和 NOTICE。API 标签为 1.0.0-hotfix1，Python 分发元数据使用其 PEP 440 规范形式 1.0.0.post1。该许可不自动覆盖前端、第三方依赖、字体、课标或 embedding 模型；这些资源保留各自授权，源码导出不替代其分发授权审查。
