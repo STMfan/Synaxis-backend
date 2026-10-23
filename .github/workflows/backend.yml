@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend / ${{ matrix.os }} / Python 3.12
+    name: Backend / ${{ matrix.os }} / Python 3.12.15
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -28,23 +28,27 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: '3.12'
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with:
-          version: '0.13.0'
+          version: '0.13.5'
           enable-cache: true
           cache-dependency-glob: uv.lock
+      - name: Install Python security patch through uv
+        run: uv python install 3.12.15
       - name: Create isolated environment
-        run: uv venv .venv --python 3.12
+        run: uv venv .venv --python 3.12.15
       - name: Install locked dependencies
         run: uv sync --frozen
+      - name: Audit locked dependencies including optional tools
+        run: |
+          uv run --frozen python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
+          uv export --frozen --all-groups --no-emit-project --output-file test-results/security-requirements.txt
+          uv run --frozen pip-audit --disable-pip --require-hashes -r test-results/security-requirements.txt
       - name: Lint
         run: uv run --frozen ruff check api auth core domain llm runtime storage tools tests main.py
       - name: Unit regressions without runtime assets or credentials
         run: |
-          python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
+          uv run --frozen python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
           uv run --frozen pytest -q -W error::RuntimeWarning --basetemp=test-results/ci-unit
       - name: Check generated API contract
         run: uv run --frozen python -m runtime.openapi_contract --check
@@ -57,11 +61,11 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          python -m zipfile -e dist/synaxis-backend.zip "$RUNNER_TEMP/synaxis-source"
+          uv run --frozen python -m zipfile -e dist/synaxis-backend.zip "$RUNNER_TEMP/synaxis-source"
           cd "$RUNNER_TEMP/synaxis-source"
-          uv venv .venv --python 3.12
+          uv venv .venv --python 3.12.15
           uv sync --frozen
-          python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
+          uv run --frozen python -c "from pathlib import Path; Path('test-results').mkdir(exist_ok=True)"
           uv run --frozen pytest -q -W error::RuntimeWarning --basetemp=test-results/ci-unit
           uv run --frozen python -m runtime.openapi_contract --check
           uv run --frozen python -m runtime.publication --check

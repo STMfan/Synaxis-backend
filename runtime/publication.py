@@ -35,6 +35,7 @@ BACKEND_DIRECTORIES = (
 )
 BACKEND_FILES = (
     "pyproject.toml",
+    ".python-version",
     "uv.lock",
     "README.md",
     ".env.example",

@@ -2,7 +2,7 @@
 
 部署后，Synaxis 提供教学 API、实时讲解、学生账号和管理面板；搜索、隔离计算、图形渲染与本地课标检索按需配置。本文覆盖安装、模型配置、工具启用、常驻服务、备份和更新，适用 API 版本 1.0.0-hotfix1。
 
-服务入口为仓库根 `main.py`，需要 Python 3.12 与 uv。完整工具环境使用 Linux；nsjail 与 API 在同一台机器。客户端请求与展示格式见 [frontend-contract.md](frontend-contract.md)。
+服务入口为仓库根 `main.py`，需要 Python 3.12.15 或更新的受支持补丁版本与 uv 0.13.5+。完整工具环境使用 Linux；nsjail 与 API 在同一台机器。客户端请求与展示格式见 [frontend-contract.md](frontend-contract.md)。
 
 ## 1. 环境与依赖
 
@@ -10,7 +10,7 @@
 
 ```bash
 cd /srv/synaxis
-uv venv .venv --python 3.12
+uv venv .venv --python 3.12.15
 uv sync --frozen
 ```
 
@@ -19,12 +19,20 @@ Windows 开发使用同样的 uv 命令，随后 python main.py 会自动使用 
 ```bash
 SOURCE_DIR=/absolute/path/to/synaxis
 RUNTIME_DIR=$HOME/synaxis-runtime
-uv venv "$RUNTIME_DIR/venv" --python 3.12
+uv venv "$RUNTIME_DIR/venv" --python 3.12.15
 UV_PROJECT_ENVIRONMENT="$RUNTIME_DIR/venv" uv sync --project "$SOURCE_DIR" --frozen --group sandbox
 "$RUNTIME_DIR/venv/bin/python" "$SOURCE_DIR/main.py" --check
 ```
 
 避免在 Windows 挂载盘上执行 chmod、复制 Linux 文件权限或建立 Linux venv。首次配置时只复制 .env.example，升级时保留已有 .env。
+
+### 安全基线（2026-10-24）
+
+`.python-version` 固定 3.12.15，`uv.lock` 更新全部依赖；CI 使用 uv 0.13.5，并对完整锁图（含沙盒）执行 pip-audit。Pillow 最低 13.0.0、Certifi 最低 2026.10.19，实际版本以锁文件为准；仅更新系统库不能修复 wheel 内嵌解码器。
+
+FastEmbed 0.9.0 仍声明 `Pillow<13`。本项目只使用文本嵌入，暂以 `tool.uv.override-dependencies` 覆盖旧上限；升级后需验证实际本地 ONNX 查询。上游支持新版后应移除此覆盖。已有 rootfs 必须重新复制安全版 Python 并使用当前锁文件重装 sandbox 依赖，单独更新 API 虚拟环境不够。
+
+相关公告：[Certifi 信任根撤销](https://github.com/advisories/GHSA-6q48-6c7w-9gw2)、[Pillow 13 安全修复](https://pillow.readthedocs.io/en/stable/releasenotes/13.0.0.html)、[CPython tar_filter](https://mail.python.org/archives/list/security-announce%40python.org/thread/43JOWPRAV5DI3VZ4FUEUAZOHCATXXOCK/)。截至本次更新，3.12.15 并未包含最后一项尚待后续发布的修复；本服务和课标工具不使用 `tarfile` 解包不可信输入，不能将依赖审计通过宣称为该解释器漏洞已修复。部署时不使用 `filter="tar"` 解包外部文件。
 
 ## 2. 私有配置和模型
 
@@ -109,10 +117,10 @@ make -C nsjail -j2
 使用 uv 提供的独立 Python 创建专用 rootfs；目录应为空，不得使用主机 / 或复制应用环境/密钥进去：
 
 ```bash
-uv python install 3.12
+uv python install 3.12.15
 mkdir -p /srv/synaxis-runtime/rootfs/{opt/python,usr/bin,work/input,work/output,tmp,dev,proc}
 chmod 1777 /srv/synaxis-runtime/rootfs/tmp
-PYBIN=$(uv python find --system 3.12)
+PYBIN=$(uv python find --system 3.12.15)
 PYDIR=$(dirname "$(dirname "$PYBIN")")
 cp -a "$PYDIR/." /srv/synaxis-runtime/rootfs/opt/python/
 ln -s /opt/python/bin/python3.12 /srv/synaxis-runtime/rootfs/usr/bin/python3
